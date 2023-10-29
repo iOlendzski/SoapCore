@@ -176,6 +176,23 @@ namespace SoapCore
 
 								writer.WriteEndElement();
 							}
+							else if (memberType.GetInterface(typeof(IEnumerable<>).FullName) is not null
+							         && memberInfo.Member.GetCustomAttribute<XmlArrayItemAttribute>() is not null)
+							{
+								var elementType = memberType.GetInterface(typeof(IEnumerable<>).FullName).GenericTypeArguments[0];
+								var xmlArrayItemAttribute = memberInfo.Member.GetCustomAttribute<XmlArrayItemAttribute>();
+
+								var elementSerializer = CachedXmlSerializer.GetXmlSerializer(elementType, xmlArrayItemAttribute.ElementName, memberNamespace);
+
+								writer.WriteStartElement(memberName, _serviceNamespace);
+
+								foreach (var item in memberValue as IEnumerable<object>)
+								{
+									elementSerializer.Serialize(writer, item);
+								}
+
+								writer.WriteEndElement();
+							}
 							else
 							{
 								serializer.Serialize(writer, memberValue);
